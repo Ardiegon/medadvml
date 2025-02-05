@@ -1,0 +1,6 @@
+[submodule "MedMNIST"]
+	path = MedMNIST
+	url = git@github.com:MedMNIST/MedMNIST.git
+[submodule "SAM-Med2D"]
+	path = SAM-Med2D
+	url = git@github.com:OpenGVLab/SAM-Med2D.git
