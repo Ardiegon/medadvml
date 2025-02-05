@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "medadvml"
+version = "0.1.0"
+description = "Advanced ML project"
+authors = [
+    { name = "Oskar Bartosz", email = "oskbsz@gmail.com" }
+]
+license = { file = "LICENSE" }
+dependencies = [
+    "torch",
+    "torchvision",
+    "numpy"
+]
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+where = ["."]
