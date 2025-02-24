@@ -5,7 +5,7 @@ import torch
 SYSTEM = system()
 
 def get_torch_device():
-    print(SYSTEM)
+    # print(SYSTEM)
     match SYSTEM:
         case "Darwin":
             return "mps" if torch.backends.mps.is_available() else "cpu"

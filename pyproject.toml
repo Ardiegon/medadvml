@@ -11,9 +11,10 @@ authors = [
 ]
 license = { file = "LICENSE" }
 dependencies = [
-    "torch",
-    "torchvision",
-    "numpy"
+    "ipykernel",
+    "medmnist",
+    "matplotlib",
+    "tqdm"
 ]
 readme = "README.md"
 requires-python = ">=3.10"
