@@ -92,32 +92,61 @@ class ModelWrapper():
 
         self.model.load_state_dict(torch.load(self.model_path, weights_only=True))
 
-    def visualize(self, dataloaders, class_names, num_images=6):
-        was_training = self.model.training
-        self.model.eval()
-        images_so_far = 0
-        fig = plt.figure()
+    # def visualize(self, dataloaders, class_names, num_images=6):
+    #     was_training = self.model.training
+    #     self.model.eval()
+    #     images_so_far = 0
+    #     fig = plt.figure()
 
+    #     with torch.no_grad():
+    #         for i, (inputs, labels) in enumerate(dataloaders['val']):
+    #             inputs = inputs.to(self.device)
+    #             labels = labels.to(self.device)
+
+    #             outputs = self.model(inputs)
+    #             _, preds = torch.max(outputs, 1)
+
+    #             for j in range(inputs.size()[0]):
+    #                 images_so_far += 1
+    #                 ax = plt.subplot(num_images//2, 2, images_so_far)
+    #                 ax.axis('off')
+    #                 ax.set_title(f'predicted: {class_names[preds[j]]}')
+    #                 imshow(inputs.cpu().data[j])
+
+
+    #                 if images_so_far == num_images:
+    #                     self.model.train(mode=was_training)
+    #                     return
+    #         self.model.train(mode=was_training)
+
+    def visualize(self, dataloaders, class_names, num_images=16):
+        self.model.eval()
+        fig, axes = plt.subplots(4, 4, figsize=(12, 12))
+        axes = axes.flatten()
+
+        images_shown = 0
         with torch.no_grad():
-            for i, (inputs, labels) in enumerate(dataloaders['val']):
+            for inputs, labels in dataloaders['val']:
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
 
                 outputs = self.model(inputs)
                 _, preds = torch.max(outputs, 1)
 
-                for j in range(inputs.size()[0]):
-                    images_so_far += 1
-                    ax = plt.subplot(num_images//2, 2, images_so_far)
+                for i in range(inputs.size(0)):
+                    if images_shown >= num_images:
+                        break
+                    ax = axes[images_shown]
+                    imshow(inputs[i].cpu(), ax=ax)
+                    ax.set_title(f'True: {class_names[labels[i]]}\nPred: {class_names[preds[i]]}', fontsize=10)
                     ax.axis('off')
-                    ax.set_title(f'predicted: {class_names[preds[j]]}')
-                    imshow(inputs.cpu().data[j])
+                    images_shown += 1
 
+                if images_shown >= num_images:
+                    break
 
-                    if images_so_far == num_images:
-                        self.model.train(mode=was_training)
-                        return
-            self.model.train(mode=was_training)
+        plt.tight_layout()
+        plt.show()
 
     def predict(self, x):
         return self.model(x)
