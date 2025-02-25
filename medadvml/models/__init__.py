@@ -158,7 +158,7 @@ class ModelWrapper():
         for phase in ['train', 'val', 'test']:
             all_labels = []
             for _, labels in dataloaders[phase]:
-                all_labels.extend(labels.cpu().numpy())
+                all_labels.extend(labels.cpu().numpy().flatten())
             
             label_counts = dict(Counter(all_labels))
             total_images = sum(label_counts.values())

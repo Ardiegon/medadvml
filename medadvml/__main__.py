@@ -26,8 +26,7 @@ def get_soup_for_task(model, name):
     
     def dermamnist(model):
         criterion = FocalLoss(gamma=2.0)
-        # optimizer = optim.SGD(model.model.parameters(), lr=0.001, momentum=0.9)
-        optimizer = torch.optim.AdamW(model.parameters(), lr=0.001, weight_decay=1e-4)
+        optimizer = torch.optim.AdamW(model.model.parameters(), lr=0.001, weight_decay=1e-4)
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
         return criterion, optimizer, scheduler
 
@@ -44,13 +43,13 @@ def get_soup_for_task(model, name):
 
 def main(opts):
     config  = Config(opts.task)
-    dataloaders, class_names = get_dataloader(config)
+    dataloaders, class_names, dataset_sizes = get_dataloader(config)
     model = ModelWrapper(config)
 
     criterion, optimizer, scheduler = get_soup_for_task(model, config.name)
 
     model.analyze_data(dataloaders, class_names)
-    model.fit(dataloaders, criterion, optimizer, scheduler, num_epochs=opts.epochs)
+    model.fit(dataloaders, dataset_sizes, criterion, optimizer, scheduler, num_epochs=opts.epochs)
 
     model.confusion_matrix(dataloaders, class_names)
     # model.visualize(dataloaders, class_names)
