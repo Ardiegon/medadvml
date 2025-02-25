@@ -61,7 +61,15 @@ def oversample(dataset, number_of_indices):
 def modify(dataset, name):
     def dermamnist(dataset):
         return oversample(dataset, number_of_indices=1400)
-    
+    def breastmnist(dataset):
+        return oversample(dataset, number_of_indices=400)
+    def organamnist(dataset):
+        return undersample(dataset, number_of_indices=3000)
+    def organcmnist(dataset):
+        return undersample(dataset, number_of_indices=1200)
+    def organsmnist(dataset):
+        return undersample(dataset, number_of_indices=1100)
+
     if name in locals().keys():
         return locals().get(name)(dataset)
     else:

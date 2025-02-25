@@ -33,13 +33,31 @@ def get_soup_for_task(model, name):
         optimizer = torch.optim.AdamW(model.model.parameters(), lr=0.001, weight_decay=1e-2)
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
         return criterion, optimizer, scheduler
+    
+    def brestmnist(model):
+        criterion = FocalLoss(gamma=2.0)
+        optimizer = torch.optim.AdamW(model.model.parameters(), lr=0.001, weight_decay=1e-4)
+        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+        return criterion, optimizer, scheduler
+    
+    def pneumoniamnist(model):
+        criterion = FocalLoss(gamma=2.0)
+        optimizer = torch.optim.AdamW(model.model.parameters(), lr=0.001, weight_decay=1e-4)
+        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+        return criterion, optimizer, scheduler
+    
+    def retinamnist(model):
+        criterion = FocalLoss(gamma=2.0)
+        optimizer = torch.optim.AdamW(model.model.parameters(), lr=0.001, weight_decay=1e-2)
+        scheduler = torch.optim.swa_utils.SWALR(optimizer, swa_lr=0.0005, anneal_strategy="cos")
+        return criterion, optimizer, scheduler
 
     if name in locals().keys():
         print(f"loading soup for {name}")
         return locals().get(name)(model)
     else:
-        criterion = nn.CrossEntropyLoss()
-        optimizer = optim.SGD(model.model.parameters(), lr=0.001, momentum=0.9)
+        criterion = FocalLoss(gamma=2.0)
+        optimizer = torch.optim.AdamW(model.model.parameters(), lr=0.001, weight_decay=1e-4)
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
         return criterion, optimizer, scheduler
         

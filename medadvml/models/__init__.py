@@ -112,7 +112,7 @@ class ModelWrapper():
                         break
                     ax = axes[images_shown]
                     imshow(inputs[i].cpu(), ax=ax)
-                    ax.set_title(f'{class_names[labels[i]]}\n{class_names[preds[i]]}', fontsize=10)
+                    ax.set_title(f'L: {class_names[labels[i]]}\nP: {class_names[preds[i]]}', fontsize=10)
                     ax.axis('off')
                     images_shown += 1
 
