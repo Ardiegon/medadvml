@@ -1,20 +1,18 @@
 import torch
 import torch.nn as nn
+from torchvision import models
 
-MODEL_SIZE_FACTOR = 32
-
-class SimpleLinearModel(nn.Module):
-    def __init__(self):
-        super(SimpleLinearModel, self).__init__()
-        self.linear1 = nn.Linear(1, 32*MODEL_SIZE_FACTOR)
-        self.linear2 = nn.Linear(32*MODEL_SIZE_FACTOR, 64*MODEL_SIZE_FACTOR)
-        self.linear3 = nn.Linear(64*MODEL_SIZE_FACTOR, 64*MODEL_SIZE_FACTOR)
-        self.output = nn.Linear(64*MODEL_SIZE_FACTOR, 1)
+class MedModel(nn.Module):
+    def __init__(self, num_labels, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.model = models.resnet50(weights='IMAGENET1K_V2')
+        num_ftrs = self.model.fc.in_features
+        self.model.fc = nn.Linear(num_ftrs, num_labels)
 
     def forward(self, x):
-        x = nn.functional.relu(self.linear1(x))
-        x = nn.functional.relu(self.linear2(x))
-        x = nn.functional.relu(self.linear3(x))
-        x = (self.output(x))
-        return x
+        return self.model(x)
+    
+if __name__ == "__main__":
+    model = MedModel(5)
+    print(model)
 
