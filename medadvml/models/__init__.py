@@ -35,9 +35,8 @@ class ModelWrapper():
         self.model_path = os.path.join("medadvml", "weights", f'{self.name}_params.pt')
 
         torch.save(self.model.state_dict(), self.model_path)
-        best_acc = 0.0
+        best_f1 = 0.0
         
-
         for epoch in tqdm(range(num_epochs), desc="Epochs: "):
             for phase in ['train', 'val']:
                 if phase == 'train':
@@ -46,7 +45,8 @@ class ModelWrapper():
                     self.model.eval() 
 
                 running_loss = 0.0
-                running_corrects = 0
+                all_preds = []
+                all_labels = []
 
                 pbar = tqdm(dataloaders[phase], desc="Inference - 0.0 ", leave=False)
                 for inputs, labels in pbar:
@@ -71,25 +71,24 @@ class ModelWrapper():
 
                     pbar.set_description(f"{phase} - {loss.item():.5f}")
                     running_loss += loss.item() * inputs.size(0)
-                    running_corrects += torch.sum(preds == labels.data)
+                    all_preds.extend(preds.cpu().numpy())
+                    all_labels.extend(labels.cpu().numpy())
                 
                 if phase == 'train':
                     scheduler.step()
 
                 epoch_loss = running_loss / dataset_sizes[phase]
-                epoch_acc = running_corrects.double() / dataset_sizes[phase]
+                epoch_f1 = f1_score(all_labels, all_preds, average='macro')
 
-                print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}')
+                print(f'\n{phase} Loss: {epoch_loss:.4f} Macro F1: {epoch_f1:.4f}')
 
-                if phase == 'val' and epoch_acc > best_acc:
-                    best_acc = epoch_acc
+                if phase == 'val' and epoch_f1 > best_f1:
+                    best_f1 = epoch_f1
                     torch.save(self.model.state_dict(), self.model_path)
-
-            print()
 
         time_elapsed = time.time() - since
         print(f'Training complete in {time_elapsed // 60:.0f}m {time_elapsed % 60:.0f}s')
-        print(f'Best val Acc: {best_acc:4f}')
+        print(f'Best val Macro F1: {best_f1:.4f}')
 
         self.model.load_state_dict(torch.load(self.model_path, weights_only=True))
 

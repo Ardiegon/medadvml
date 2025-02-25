@@ -9,18 +9,20 @@ import numpy as np
 
 from medadvml.config import Config, BATCH_SIZE
 
-def get_transform(phase):
+def get_transform(phase, n_channels):
+    transform_list = []
+    
     if phase == "train":
-        return transforms.Compose([
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
-    if phase in ["val", "test"]:
-        return transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
+        transform_list.append(transforms.RandomHorizontalFlip())
+    
+    transform_list.append(transforms.ToTensor())
+    
+    if n_channels == 1:
+        transform_list.append(lambda x: x.repeat(3, 1, 1))
+    
+    transform_list.append(transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]))
+    
+    return transforms.Compose(transform_list)
 
 def undersample(dataset, number_of_indices):
     labels = torch.tensor(dataset.labels).squeeze()
@@ -67,10 +69,11 @@ def modify(dataset, name):
 
 def get_dataloader(config: Config):
     size = 128
+    n_channels = config["n_channels"]
     DataClass = getattr(medmnist, config['python_class'])
-    train_dataset = DataClass(split='train', transform=get_transform("train"), size=size, download=True)
-    val_dataset = DataClass(split='val', transform=get_transform("val"), size=size, download=True)
-    test_dataset = DataClass(split='test', transform=get_transform("test"), size=size, download=True)
+    train_dataset = DataClass(split='train', transform=get_transform("train", n_channels), size=size, download=True)
+    val_dataset = DataClass(split='val', transform=get_transform("val", n_channels), size=size, download=True)
+    test_dataset = DataClass(split='test', transform=get_transform("test", n_channels), size=size, download=True)
 
     train_dataset = modify(train_dataset, config.name)
 
