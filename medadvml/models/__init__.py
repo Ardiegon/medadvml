@@ -1,12 +1,13 @@
 import os
 import time
 import torch
+import seaborn as sns
 from tqdm import tqdm
+from sklearn.metrics import confusion_matrix, f1_score
 import matplotlib.pyplot as plt
+from collections import Counter
 
-from tempfile import TemporaryDirectory
 
-from medadvml.config import Config
 from medadvml.models.simple import MedModel
 from medadvml.utilities import platform
 from medadvml.data.visualisation import imshow 
@@ -92,41 +93,15 @@ class ModelWrapper():
 
         self.model.load_state_dict(torch.load(self.model_path, weights_only=True))
 
-    # def visualize(self, dataloaders, class_names, num_images=6):
-    #     was_training = self.model.training
-    #     self.model.eval()
-    #     images_so_far = 0
-    #     fig = plt.figure()
-
-    #     with torch.no_grad():
-    #         for i, (inputs, labels) in enumerate(dataloaders['val']):
-    #             inputs = inputs.to(self.device)
-    #             labels = labels.to(self.device)
-
-    #             outputs = self.model(inputs)
-    #             _, preds = torch.max(outputs, 1)
-
-    #             for j in range(inputs.size()[0]):
-    #                 images_so_far += 1
-    #                 ax = plt.subplot(num_images//2, 2, images_so_far)
-    #                 ax.axis('off')
-    #                 ax.set_title(f'predicted: {class_names[preds[j]]}')
-    #                 imshow(inputs.cpu().data[j])
-
-
-    #                 if images_so_far == num_images:
-    #                     self.model.train(mode=was_training)
-    #                     return
-    #         self.model.train(mode=was_training)
 
     def visualize(self, dataloaders, class_names, num_images=16):
         self.model.eval()
-        fig, axes = plt.subplots(4, 4, figsize=(12, 12))
+        fig, axes = plt.subplots(4, 4, figsize=(8, 8))
         axes = axes.flatten()
 
         images_shown = 0
         with torch.no_grad():
-            for inputs, labels in dataloaders['val']:
+            for inputs, labels in dataloaders['test']:
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
 
@@ -138,7 +113,7 @@ class ModelWrapper():
                         break
                     ax = axes[images_shown]
                     imshow(inputs[i].cpu(), ax=ax)
-                    ax.set_title(f'True: {class_names[labels[i]]}\nPred: {class_names[preds[i]]}', fontsize=10)
+                    ax.set_title(f'{class_names[labels[i]]}\n{class_names[preds[i]]}', fontsize=10)
                     ax.axis('off')
                     images_shown += 1
 
@@ -148,5 +123,56 @@ class ModelWrapper():
         plt.tight_layout()
         plt.show()
 
+    def confusion_matrix(self, dataloaders, class_names):
+        self.model.eval()
+        all_preds = []
+        all_labels = []
+
+        with torch.no_grad():
+            for inputs, labels in dataloaders['test']:
+                inputs = inputs.to(self.device)
+                labels = labels.to(self.device)
+
+                outputs = self.model(inputs)
+                _, preds = torch.max(outputs, 1)
+
+                all_preds.extend(preds.cpu().numpy())
+                all_labels.extend(labels.cpu().numpy())
+
+        cm = confusion_matrix(all_labels, all_preds)
+        f1_macro = f1_score(all_labels, all_preds, average='macro')
+        
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
+        plt.xlabel('Predicted')
+        plt.ylabel('Actual')
+        plt.title(f'Confusion Matrix (Macro F1: {f1_macro:.4f})')
+        plt.savefig("new_cms.png")
+        plt.show()
+
     def predict(self, x):
         return self.model(x)
+
+    def analyze_data(self, dataloaders, class_names):
+        stats = {}
+        for phase in ['train', 'val', 'test']:
+            all_labels = []
+            for _, labels in dataloaders[phase]:
+                all_labels.extend(labels.cpu().numpy())
+            
+            label_counts = dict(Counter(all_labels))
+            total_images = sum(label_counts.values())
+            
+            stats[phase] = {
+                'class_counts': {class_names[k]: v for k, v in label_counts.items()},
+                'total_images': total_images
+            }
+        
+        print("Dataset Analysis:")
+        for phase, data in stats.items():
+            print(f"\n{phase.upper()} SET:")
+            for cls, count in data['class_counts'].items():
+                print(f"  {cls}: {count} images")
+            print(f"  TOTAL: {data['total_images']} images")
+        
+        return stats
